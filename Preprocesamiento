@@ -1,0 +1,30 @@
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+
+# Ruta a tu dataset
+data_dir = "./Trashnet/dataset-resized"
+
+# Generador con preprocesamiento y aumentación
+datagen = ImageDataGenerator(
+    preprocessing_function=preprocess_input,  # <- clave para MobileNetV2
+    validation_split=0.2
+)
+
+# Conjunto de entrenamiento
+train_gen = datagen.flow_from_directory(
+    data_dir,
+    target_size=(224, 224),   # tamaño requerido por MobileNetV2
+    batch_size=32,
+    class_mode='categorical',
+    subset='training'
+)
+
+# Conjunto de validación
+val_gen = datagen.flow_from_directory(
+    data_dir,
+    target_size=(224, 224),
+    batch_size=32,
+    class_mode='categorical',
+    subset='validation'
+)

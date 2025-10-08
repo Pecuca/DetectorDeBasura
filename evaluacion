@@ -1,0 +1,51 @@
+import tensorflow as tf
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import classification_report, confusion_matrix
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+
+# Cargar modelo entrenado
+model = tf.keras.models.load_model("modelo_residuos_finetuned.h5")
+
+# Recrear generador de validación
+data_dir = "trashnet/dataset-resized"
+
+datagen = ImageDataGenerator(
+    preprocessing_function=preprocess_input,
+    validation_split=0.2
+)
+
+val_gen = datagen.flow_from_directory(
+    data_dir,
+    target_size=(224, 224),
+    batch_size=32,
+    class_mode='categorical',
+    subset='validation',
+    shuffle=False
+)
+
+# Evaluación global
+val_loss, val_acc = model.evaluate(val_gen)
+print(f"Precisión en validación: {val_acc:.2f}")
+
+# Predicciones
+y_pred = model.predict(val_gen)
+y_pred_classes = np.argmax(y_pred, axis=1)
+y_true = val_gen.classes
+class_labels = list(val_gen.class_indices.keys())
+
+# Reporte de métricas
+print("\nReporte de clasificación:\n")
+print(classification_report(y_true, y_pred_classes, target_names=class_labels))
+
+# Matriz de confusión
+cm = confusion_matrix(y_true, y_pred_classes)
+plt.figure(figsize=(8,6))
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
+            xticklabels=class_labels, yticklabels=class_labels)
+plt.xlabel("Predicción")
+plt.ylabel("Real")
+plt.title("Matriz de confusión")
+plt.show()
